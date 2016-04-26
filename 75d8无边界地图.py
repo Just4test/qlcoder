@@ -140,9 +140,11 @@ class Map(QuadTree):
 	
 	def __init__(self):
 		self.map = [[QuadTree(self), QuadTree(self)], [QuadTree(self), QuadTree(self)]]
-		self.deep = 1
+		self.deep = 0
 		
 	def get(self, x, y):
+		if int(math.log(x, 2)) > self.deep or int(math.log(y, 2)) > self.deep:
+			return None
 		_x = _y = 1
 		if x < 0:
 			_x = 0
@@ -164,6 +166,8 @@ class Map(QuadTree):
 		if y < 0:
 			_y = 0
 			y = -y
+			
+		self.map[_x][_y].set_with_deep(tar, x, y, self.deep)
 		
 		
 		
