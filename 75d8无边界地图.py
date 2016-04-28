@@ -1,98 +1,107 @@
 # http://www.qlcoder.com/task/75d8
-import math
-print(math.log(1024,2))
-exit()
+SIZE = 8
 class Tail:
 	'''
 	组成地图的最小单位，8x8
 	'''
 	
-	def __init__(self, map, data = None):
-		if data is None:
-			data = [[1 for i in range(8)] for j in range(8)]
-		self.data = data
-		
+	
+	def __init__(self, x, y, map, data = None):
 		self.map = map
+		self.block_x = x
+		self.block_y = y
 		
-		self.left = self.right = self.top = self.buttom = None
-		self.lefttop = self.righttop = self.leftbuttom = self.rightbuttom = None
-		
-	def coord(self):
-		return map.tailcoord(self)
+		num = 0
+		if data is None:
+			data = [[0 for i in range(SIZE)] for j in range(SIZE)]
+		else:
+			for a in range(SIZE):
+				for b in range(SIZE):
+					num += data[a][b]
+			
+		self.data = data
+		self.num = num
 		
 		
 	def __repr__(self):
-		return '{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n'.format(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7])
+		data = self.data
+		return '\n{}_{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n'.format(
+			self.block_x, self.block_y,
+			self.data[0], self.data[1], self.data[2], self.data[3],
+			self.data[4], self.data[5], self.data[6], self.data[7])
 	
-	def get_v(self, x, y):
-		tar = self
-		if -1 == x:
-			tar = self.left
-			x = 7
-		elif 8 == x:
-			tar = self.right
-			x = 0
-		if -1 == y:
-			tar = tar.top
-			y = 7
-		elif 8 == y:
-			tar = tar.buttom
-			y = 0
-		return tar.data[x]
+	def neighber(self, block_offset_x, block_offset_y):
+		return self.map.get(self.block_x + block_offset_x, self.block_y + block_offset_y)
+	
+	def get(self, x, y):
+		if  x // SIZE == 0 and y // SIZE == 0:
+			return self.data[y][x]
+		else:
+			tartail = self.neighber(x // SIZE, y // SIZE)
+			if tartail:
+				return tartail.data[y % SIZE][x % SIZE]
+			else:
+				return 0
+		
+	def calc_one(self, x, y):
+		temp = self.get(x - 1, y - 1) + self.get(x - 1, y) + self.get(x - 1, y + 1) + \
+			self.get(x, y - 1) + self.get(x, y + 1) + \
+			self.get(x + 1, y - 1) + self.get(x + 1, y) + self.get(x + 1, y + 1)
+		
+		# print('{}, {} = {} -- {}'.format(x, y, self.get(x, y), temp))
+		if temp < 2 or temp > 3:
+			return 0, temp
+		elif 3 == temp:
+			return 1, temp
+		else:
+			return self.get(x, y), temp
 	
 	def calc_to_cache(self):
-		'计算生命的存亡变化并放入缓存'
-		cache = [[False for i in range(8)] for j in range(8)]
+		'''
+		计算生命的存亡变化并放入缓存
+		'''
+		cache = [[0 for i in range(SIZE)] for j in range(SIZE)]
 		num = 0
 		data = self.data
-		for x in range(8):
-			for y in range(8):
-				
-				l = 0
-				if 0 == x:
-					if self.left is not None:
-						l = self.left[7][y]
-				else:
-					l = data[x - 1][y]
-				
-				r = 0	
-				if 7 == x:
-					if self.right is not None:
-						r = self.right[0][y]
-				else:
-					r = data[x + 1][y]
-						
-				t = 0		
-				if 0 == y:
-					if self.top is not None:
-						t = self.top[x][7]
-				else:
-					t = data[x][y - 1]
-				
-				b = 0
-				if 7 == y:
-					if self.buttom is not None:
-						l = self.buttom[y][0]
-				else:
-					b = data[x][y] + 1
+		for x in range(SIZE):
+			for y in range(SIZE):
+				result, temp = self.calc_one(x, y)
 					
-				temp = l + r + t + b
+				# if result != data[y][x]:
+				# 	print('{} {} {} {}'.format(x, y, result, temp))
 				
-				if temp < 2 or temp > 3:
-					result = 0
-				elif 3 == temp:
-					result = 1
-				else:
-					result = data[x][y]
-					
-				if result != data[x][y]:
-					print('{} {} {}'.format(x, y, result))
-				
-				cache[x][y] = result
+				cache[y][x] = result
 				num += result
 				
 		self.cache = cache
 		self.cachenum = num
+	
+	def check_empty_neighber(self):
+		'检查是否影响了邻近的空地块'
+		def check(block_offset_x, block_offset_y):
+			if self.neighber(block_offset_x, block_offset_y) is None:
+				for i in range(SIZE):
+					x = y = i
+					if block_offset_x == 1:
+						x = SIZE
+					elif block_offset_x == -1:
+						x = -1
+					if block_offset_y == 1:
+						y = SIZE
+					elif block_offset_y == -1:
+						y = -1
+					result, temp = self.calc_one(x, y)
+					if result:
+						print('于{}, {}处诞生了生命，{}'.format(x, y, temp))
+						self.map.append(self.block_x + block_offset_x, self.block_y + block_offset_y)
+						break
+		
+		check(-1, 0)
+		check(1, 0)	
+		check(0, -1)
+		check(0, 1)
+				
+				
 		
 	def apply_cache(self):
 		'应用缓存'
@@ -100,77 +109,72 @@ class Tail:
 		self.num = self.cachenum
 		self.cache = None
 		
-class QuadTree:
-	'''
-	四叉树，地图的支持数据结构。
-	当deep大于0时，子节点是QuadTree。deep为0时，子节点是Tail
-	'''
-	
-	def __init__(self, parrent = None):
-		self.map = [[None, None], [None, None]]
-		self.parrent = parrent
-		
-	def set_with_deep(self, tar, x, y, deep):
-		if deep:
-			_x = x >> deep
-			_y = y >> deep
-			if self.map[_x][_y] is None:
-				self.map[_x][_y] = QuadTree()
-				self.map[_x][_y].parrent = self
-			self.map[_x][_y].set_with_deep(tar, x >> 1, y >> 1, deep - 1)
-		else:
-			#tar is Tail
-			self.map[x][y] = tar
-			tar.qtree = self
-			
-	def get_with_deep(self, x, y, deep):
-		if deep:
-			_x = x >> deep
-			_y = y >> deep
-			if self.map[_x][_y] is None:
-				return None
-			else:
-				return self.map[_x][_y].get_with_deep(x >> 1, y >> 1, deep - 1)
 				
-class Map(QuadTree):
+class Map():
 	'''
 	地图。
 	地图支持负坐标。支持自动扩容。支持查找地块
 	'''
 	
 	def __init__(self):
-		self.map = [[QuadTree(self), QuadTree(self)], [QuadTree(self), QuadTree(self)]]
-		self.deep = 0
+		self.tails = {}
+		
+	def put(self, t):
+		key = '{}_{}'.format(t.block_x, t.block_y)
+		self.tails[key] = t
+		# print('加入了地块\n{}'.format(t))
 		
 	def get(self, x, y):
-		if int(math.log(x, 2)) > self.deep or int(math.log(y, 2)) > self.deep:
-			return None
-		_x = _y = 1
-		if x < 0:
-			_x = 0
-			x = -x
-		if y < 0:
-			_y = 0
-			y = -y
-		tar = self.map[_x][_y]
-		if tar:
-			return tar.get_with_deep(x, y, self.deep)
-		else:
-			return None
+		return self.tails.get('{}_{}'.format(x, y))
+	
+	def delete(self, t):
+		key = '{}_{}'.format(t.block_x, t.block_y)
+		del self.tails[key]
+		
+		
+	def append(self, x, y):
+		'追加一些空地块'
+		tail = Tail(x, y, self)
+		self.put(tail)
+		self.to_append.append(tail)
+		print('追加空地块{}, {}'.format(tail.block_x, tail.block_y))
+		
+	def calc(self):
+		
+		# print(self.tails)
+		# print('!!!!!!!!!!!!!!!!!!!!!!!!!')
+		
+		self.to_append = []
+		items = [x for x in self.tails.items()]
+		for (k, tail) in items:
+			tail.calc_to_cache()
+			tail.check_empty_neighber()
 			
-	def set(self, tar, x, y):
-		_x = _y = 1
-		if x < 0:
-			_x = 0
-			x = -x
-		if y < 0:
-			_y = 0
-			y = -y
+		for tail in self.to_append:
+			tail.calc_to_cache()
 			
-		self.map[_x][_y].set_with_deep(tar, x, y, self.deep)
+		num = 0
+		length = 0
+		items = [x for x in self.tails.items()]
+		for (k, tail) in items:
+			tail.apply_cache()
+			# print('处理地块{},{}，生命数{}'.format(tail.block_x, tail.block_y, tail.num))
+			if tail.num == 0:
+				self.delete(tail)
+				# print('删除了该地块')
+			else:
+				length += 1
+				num += tail.num
+		print('length = {}'.format(length))
+		return num, length
 		
 		
+			
 		
+			
+		
+		
+	
 data = [
 [0, 0, 0, 0, 0, 0, 0, 0],
 [0, 0, 0, 0, 0, 0, 0, 0],
@@ -182,8 +186,28 @@ data = [
 [0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
-t = Tail(data)
-print(t)
-t.calc_to_cache()
-t.apply_cache()
-print(t)
+m = Map()
+t = Tail(1, 1, m, data)
+# print(t)
+# t.calc_to_cache()
+# t.apply_cache()
+# print(t)
+
+m.put(t)
+
+maxnum = 0
+maxtime = 0
+for i in range(1, 9999):
+	print('===================================')
+	num, length = m.calc()
+	print('第{}轮计算完成：{}个生命，{}个地块'.format(i, num, length))
+	if num > maxnum:
+		print('创造了新纪录！{}'.format(num))
+		maxnum = num
+		maxtime = i
+	else:
+		print('当前记录是{}轮创造的{}'.format(maxtime, maxnum))
+		
+		
+		
+	# print(t)
