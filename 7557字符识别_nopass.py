@@ -17,8 +17,6 @@ sudo apt-get install tesseract-ocr
 sudo pip3 install pytesseract
 '''
 
-
-import zipfile
 import os
 dirname = 'temp_7557'
 filename = dirname + '.7z'
