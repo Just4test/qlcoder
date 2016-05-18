@@ -101,6 +101,14 @@ def xxx(image):
 # print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 # image.save('source.png')
 # ret.save('target2.png')
+root = dirname + '/cap1'
+for i in os.listdir(root):
+	path = os.path.join(root, i)
+	image = Image.open(path)
+	temp = xxx(image)
+	temp.save(dirname + '/xxx/' + i)
+	
+exit()
 
 import pytesseract
 
@@ -116,15 +124,26 @@ for i in os.listdir(root):
 	temp = xxx(image)
 	s = pytesseract.image_to_string(temp)
 	if len(s) == 0:
-		print('{} 识别失败'.format(path))
+		print('{} 识别失败'.format(i))
 		fail += 1
 	else:
-		print('{} {}'.format(path, s))
+		print('{} {}'.format(i, s))
 		if s in dic:
-			dic[s].append(path)
+			dic[s].append(i)
 			print('找到重复！！！！！！！！dic[{}] = {}'.format(s, dic[s]))
+			
+			tardir = dirname + '/find/' + s
+			if not os.path.isdir(tardir):
+				os.makedirs(tardir)
+				
+			for j in dic[s]:
+				tarfile = tardir + '/' + j 
+				sourcefile = os.path.join(root, j)
+				if not os.path.isfile(tarfile):
+					print('将文件{}复制到{}'.format(sourcefile, tarfile))
+					open(tarfile, "wb+").write(open(sourcefile, "rb").read())
 			find += 1
 		else:
-			dic[s] = [path]
+			dic[s] = [i]
 	
 print('完毕。总共处理{}个，识别失败{}个，找到重复{}个。'.format(count, fail, find))
