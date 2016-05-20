@@ -104,3 +104,18 @@ def f_arr(m, n):
 需求的结果保留16**8的尾数。
 特别的，当n >= 29时，这个尾数均为FFFFFFFD(即16**8 - 3)。所以FFFFFFFD即为所求。
 '''
+
+dic = {}
+a = 5
+i = 0
+n = 16 ** 8
+print(n)
+while a not in dic:
+	if i % (1024 * 1024) == 0:
+		print('calc {} M'.format(i / 1024 / 1024))
+	
+	dic[a] = i
+	a = (a * 2 + 3) % n
+	i += 1
+	
+print('find! f(3, {}) = f(3, {}) = {}'.format(i, dic[a], a))

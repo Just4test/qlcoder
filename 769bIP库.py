@@ -29,7 +29,6 @@ country = read_arr('country.php')
 province = read_arr('province.php')
 proxy = read_arr('proxy.php')
 data = open(dirname + '/taobaoip-master/ip.data', 'rb').read()
-print(len(data))
 
 import struct
 
