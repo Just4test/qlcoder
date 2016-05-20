@@ -12,7 +12,7 @@ class User:
     __slots__ = [
         'id',
         'hot', # 指示是否是网络红人。红人的消息读扩散，非红人的消息写扩散
-        'following', # 关注的人
+#        'following', # 关注的人
         'follower', # 关注自己的人。如果自己不是红人，则发的信息投递到follower的inbox中。
         'hotfollowing', # 关注的网络红人。需要从这些人的outbox中读取消息。每个元素是(id, outboxindex)
         'inbox', # 关注的人中非红人的更新投递到inbox
@@ -21,7 +21,7 @@ class User:
     
     def follow(self, id):
         tar = users[id - 1]
-        self.following.append(tar)
+#        self.following.append(tar)
         tar.follower.append(self)
         if tar.hot:
             self.hotfollowing.append([tar, 0])
@@ -29,7 +29,7 @@ class User:
     def __init__(self, id):
         self.id = id
         self.hot = False
-        self.following = []
+#        self.following = []
         self.follower = []
         self.hotfollowing = []
         self.inbox = []
@@ -37,7 +37,7 @@ class User:
         
         # 填充关注列表
         if id == 1:
-            self.following = users
+#            self.following = users
             self.hot = True
         else:
             self.follow(1)
@@ -75,21 +75,25 @@ filename = 'temp_7665.py'
 DATA_FILE = 'temp_7665_data.txt'
 __import__('util').loadfile(url, filename)
 
-print('生成数据文件……')
 import os
-os.system('python {}'.format(filename))
-os.rename('timeline.txt', DATA_FILE)
+if not os.path.isfile(DATA_FILE):
+    print('生成数据文件……')
+    os.system('python {}'.format(filename))
+    os.rename('timeline.txt', DATA_FILE)
+else:
+    print('数据文件早已准备好')
 
 print('初始化用户……')
 for i in range(1, USER_TOTAL + 1):
     users.append(User(i))
     if i % 100000 == 0:
-        print('已处理{}万个用户'.format(int(i / 10000)))
+        print('已创建{}万个用户'.format(int(i / 10000)))
 
 print('处理行为……')
-md5list = []
 data = open(DATA_FILE)
+resultmd5 = None
 lineindex = 0
+
 for line in data:
     temp = line.split(' ')
     user = users[int(temp[1]) - 1]
@@ -98,16 +102,15 @@ for line in data:
         user.post(msg)
     else:
         view = user.view()
-        # print('"{}"'.format(view))
-        md5 = hashlib.md5(view.encode())
-        md5list.append(md5.hexdigest())
+        linemd5 = hashlib.md5(view.encode()).hexdigest()
+        if resultmd5 is None:
+            resultmd5 = hashlib.md5(linemd5.encode())
+        else:
+            resultmd5.update(('-' + linemd5).encode())
         
     lineindex += 1
     
     if lineindex % 100000 == 0:
         print('已处理{}万条记录'.format(int(lineindex / 10000)))
-    
-temp = '-'.join(md5list)
-# print(temp)
-md5 = hashlib.md5(temp.encode())
-print('答案是', md5.hexdigest())
+
+print('答案是', resultmd5.hexdigest())
