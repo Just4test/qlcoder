@@ -15,7 +15,8 @@ class User:
         'hot', # 指示是否是网络红人。红人的消息读扩散，非红人的消息写扩散
 #        'following', # 关注的人。这个值没用。
         'follower', # 关注自己的人。如果自己不是红人，则发的信息投递到follower的inbox中。自己是红人，这个值没用。
-        'hotfollowing', # 关注的网络红人。需要从这些人的outbox中读取消息。每个元素是(id, outboxindex)。
+        'hotfollowing', # 关注的网络红人(比自己小的那些)。需要从这些人的outbox中读取消息。每个元素是(id, outboxindex)。
+        'prime_start', # 素数起始位置
         'inbox', # 关注的人中非红人的更新投递到inbox
         'outbox', # 红人才有用，自己的更新列表
     ]
@@ -23,9 +24,10 @@ class User:
     def follow(self, id):
         tar = users[id - 1]
 #        self.following.append(tar)
-        tar.follower.append(self)
         if tar.hot:
             self.hotfollowing.append([tar, 0])
+        else:
+            tar.follower.append(self) #为了节省内存，目标是红人时不为其添加follower
     
     def __init__(self, id):
         self.id = id
@@ -54,9 +56,10 @@ class User:
             if is_prime:
                 self.hot = True
                 primeusers.append(self)
-                for i in range(1, len(users)):
-                    user = users[i]
+                for user in users:
                     user.hotfollowing.append([self, 0])
+            else:
+                self.follower.append(users[0])
                     
 
     def post(self, msg):
