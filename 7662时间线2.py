@@ -6,7 +6,7 @@ USER_TOTAL = 10000000
 import math
 import hashlib
 
-users = []
+users = [None] * USER_TOTAL
 primeusers = [] # 素数用户列表。除了1以外的所有红人。
 class User:
     '单个用户'
@@ -17,6 +17,7 @@ class User:
         'follower', # 关注自己的人。如果自己不是红人，则发的信息投递到follower的inbox中。自己是红人，这个值没用。
         'hotfollowing', # 关注的网络红人(比自己小的那些)。需要从这些人的outbox中读取消息。每个元素是(id, outboxindex)。
         'prime_start', # 素数起始位置
+        'bigger_prime_outboxindex', # 每个元素关注的比自己大的用户的outboxindex。
         'inbox', # 关注的人中非红人的更新投递到inbox
         'outbox', # 红人才有用，自己的更新列表
     ]
@@ -44,6 +45,7 @@ class User:
 #            self.following = users
             self.hot = True
         else:
+            self.prime_start = len(primeusers)
             self.follow(1)
             is_prime = True
             max_test_value = int(math.sqrt(id))
